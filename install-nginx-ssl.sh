@@ -15,7 +15,9 @@ sudo apt install -y nginx certbot python3-certbot-nginx
 
 echo "🔹 Creating Nginx config for $DOMAIN..."
 
-sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null <<EOF
+NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
+
+sudo tee $NGINX_CONF > /dev/null <<EOF
 server {
     listen 80;
     server_name $DOMAIN;
@@ -31,7 +33,7 @@ server {
 EOF
 
 echo "🔹 Enabling Nginx config..."
-sudo ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN
+sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/$DOMAIN
 
 echo "🔹 Testing and restarting Nginx..."
 sudo nginx -t && sudo systemctl restart nginx
@@ -42,11 +44,15 @@ sudo systemctl enable nginx
 echo "🔹 Obtaining SSL certificate..."
 sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m admin@"$DOMAIN" --redirect
 
+echo "🔹 Enforcing auto-renew..."
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+
 echo ""
 echo "✅ SSL Installed & Auto-Renewal enabled!"
 echo "✅ Nginx is running and enabled on boot"
-
+echo "✅ Config file: /etc/nginx/sites-available/$DOMAIN"
 echo ""
 echo "✅ DONE!"
-echo "Your API is live at: https://$DOMAIN"
-echo "Reverse Proxy forwarding → http://127.0.0.1:$APP_PORT"
+echo "✅ Your API is live at: https://$DOMAIN"
+echo "✅ Reverse Proxy forwarding → http://127.0.0.1:$APP_PORT"
