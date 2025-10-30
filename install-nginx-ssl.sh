@@ -7,6 +7,9 @@ read DOMAIN
 echo "Enter internal app port (example: 8000):"
 read APP_PORT
 
+echo "Enter email for SSL certificate (example: user@example.com):"
+read SSL_EMAIL
+
 echo "🔹 Updating system..."
 sudo apt update -y
 
@@ -42,17 +45,16 @@ echo "🔹 Enabling Nginx to start on boot..."
 sudo systemctl enable nginx
 
 echo "🔹 Obtaining SSL certificate..."
-sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m admin@"$DOMAIN" --redirect
+sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$SSL_EMAIL" --redirect
 
-echo "🔹 Enforcing auto-renew..."
+echo "🔹 Enabling auto-renew..."
 sudo systemctl enable certbot.timer
 sudo systemctl start certbot.timer
 
 echo ""
 echo "✅ SSL Installed & Auto-Renewal enabled!"
-echo "✅ Nginx is running and enabled on boot"
-echo "✅ Config file: /etc/nginx/sites-available/$DOMAIN"
+echo "✅ Email used: $SSL_EMAIL"
+echo "✅ Domain: https://$DOMAIN"
+echo "✅ Reverse Proxy → http://127.0.0.1:$APP_PORT"
 echo ""
 echo "✅ DONE!"
-echo "✅ Your API is live at: https://$DOMAIN"
-echo "✅ Reverse Proxy forwarding → http://127.0.0.1:$APP_PORT"
