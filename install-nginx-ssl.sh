@@ -23,7 +23,10 @@ NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
 sudo tee $NGINX_CONF > /dev/null <<EOF
 server {
     listen 80;
-    server_name $DOMAIN;
+    server_name $DOMAIN;   
+    
+    # Support 100MB uploads
+    client_max_body_size 100M;
 
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
