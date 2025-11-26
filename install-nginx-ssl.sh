@@ -11,25 +11,26 @@ echo "Enter email for SSL certificate (example: user@example.com):"
 read SSL_EMAIL
 
 echo "🔹 Updating system..."
-sudo apt update -y
+apt update -y
 
 echo "🔹 Installing Nginx & Certbot..."
-sudo apt install -y nginx certbot python3-certbot-nginx
+apt install -y nginx certbot python3-certbot-nginx
 
 echo "🔹 Creating Nginx config for $DOMAIN..."
 
 NGINX_CONF="/etc/nginx/sites-available/$DOMAIN"
 
-sudo tee $NGINX_CONF > /dev/null <<EOF
+cat > "$NGINX_CONF" <<EOF
 server {
     listen 80;
-    server_name $DOMAIN;   
-    
-    # Support 100MB uploads
-    client_max_body_size 100M;
+    server_name $DOMAIN;
+
+    client_max_body_size 100M;
 
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
+        proxy_http_version 1.1;
+
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -39,20 +40,21 @@ server {
 EOF
 
 echo "🔹 Enabling Nginx config..."
-sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/$DOMAIN
+ln -sf "$NGINX_CONF" "/etc/nginx/sites-enabled/$DOMAIN"
 
 echo "🔹 Testing and restarting Nginx..."
-sudo nginx -t && sudo systemctl restart nginx
+nginx -t
+systemctl restart nginx
 
 echo "🔹 Enabling Nginx to start on boot..."
-sudo systemctl enable nginx
+systemctl enable nginx
 
 echo "🔹 Obtaining SSL certificate..."
-sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$SSL_EMAIL" --redirect
+certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$SSL_EMAIL" --redirect
 
 echo "🔹 Enabling auto-renew..."
-sudo systemctl enable certbot.timer
-sudo systemctl start certbot.timer
+systemctl enable certbot.timer
+systemctl start certbot.timer
 
 echo ""
 echo "✅ SSL Installed & Auto-Renewal enabled!"
